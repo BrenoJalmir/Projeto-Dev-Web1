@@ -1,40 +1,109 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in</title>
-  <link rel="stylesheet" href="../css/sign_in.css">
-</head>
-<body>
-  <div id="container">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in - GameTracker</title>
+    <link rel="stylesheet" href="../css/sign_in.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="box">
+        <form id="loginForm">
+          <h2>Sign in</h2>
 
-    <div id="box">
-      <form action="#"> <!--method="POST"> -->
-        <h2>Sign in</h2>
-        
-        <div id="inputs">
-          <div>  
-            <label for="username-input">USERNAME</label>
-            <input type="text" name="username-input">
+          <div id="inputs">
+            <div>
+              <label for="email-input">EMAIL</label>
+              <input type="email" name="email" id="email-input" required />
+            </div>
+
+            <div>
+              <label for="password-input">PASSWORD</label>
+              <input
+                type="password"
+                name="password"
+                id="password-input"
+                required
+              />
+            </div>
           </div>
-          
-          <div>
-            <label for="password-input">PASSWORD</label>
-            <input type="password" name="password-input">
-          </div>
-        </div>
-          
-        <button type="submit">Sign in</button>
 
-        <p>Doesn't have an account?</p>
-        <p><a href="./sign_up.html">Create a free account.</a></p>
+          <div
+            id="error-message"
+            style="
+              display: none;
+              color: #ff6b6b;
+              text-align: center;
+              margin: 1rem 0;
+              font-size: 0.9rem;
+            "
+          ></div>
 
-      </form>
+          <button type="submit" id="login-btn">Sign in</button>
+
+          <p>Doesn't have an account?</p>
+          <p><a href="./sign_up.html">Create a free account.</a></p>
+        </form>
+      </div>
     </div>
-  </div>
-</body>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const email = document.getElementById("email-input").value;
+          const password = document.getElementById("password-input").value;
+          const errorDiv = document.getElementById("error-message");
+          const loginBtn = document.getElementById("login-btn");
+
+          loginBtn.disabled = true;
+          loginBtn.textContent = "Signing in...";
+          errorDiv.style.display = "none";
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/auth/sign_in`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+
+              window.location.href = "game_tracker.html";
+            } else {
+              errorDiv.textContent = data.message || "Login failed";
+              errorDiv.style.display = "block";
+            }
+          } catch (error) {
+            console.error("Login error:", error);
+            errorDiv.textContent = "Network error. Please try again.";
+            errorDiv.style.display = "block";
+          } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Sign in";
+          }
+        });
+
+      if (localStorage.getItem("token")) {
+        window.location.href = "game_tracker.html";
+      }
+    </script>
+  </body>
 </html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My List - GameTracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/my_list.css" />
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <a href="game_tracker.html" class="logo">GameTracker</a>
+        <ul class="nav-links">
+          <li><a href="game_tracker.html">Discover</a></li>
+          <li><a href="my_list.html" class="active">My List</a></li>
+          <li><a href="#" onclick="showFeature('Friends')">Friends</a></li>
+          <li><a href="#" onclick="showFeature('Reviews')">Reviews</a></li>
+        </ul>
+        <div class="user-avatar" onclick="showFeature('Profile')">U</div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="page-header">
+        <h1 class="page-title">My Game List</h1>
+        <p class="page-subtitle">Track and organize your gaming journey</p>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="totalGames">0</div>
+          <div class="stat-label">Total Games</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="completedGames">0</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="currentlyPlaying">0</div>
+          <div class="stat-label">Currently Playing</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="averageRating">0</div>
+          <div class="stat-label">Average Rating</div>
+        </div>
+      </section>
+
+      <section class="list-filters">
+        <div class="filter-group">
+          <button class="filter-btn active" onclick="filterByStatus('all')">
+            All
+          </button>
+          <button class="filter-btn" onclick="filterByStatus('playing')">
+            Playing
+          </button>
+          <button class="filter-btn" onclick="filterByStatus('completed')">
+            Completed
+          </button>
+          <button class="filter-btn" onclick="filterByStatus('planned')">
+            Plan to Play
+          </button>
+          <button class="filter-btn" onclick="filterByStatus('dropped')">
+            Dropped
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <select class="filter-select" id="sortSelect" onchange="sortGames()">
+            <option value="dateAdded">Sort by Date Added</option>
+            <option value="title">Sort by Title</option>
+            <option value="rating">Sort by Rating</option>
+            <option value="hoursPlayed">Sort by Hours Played</option>
+          </select>
+        </div>
+
+        <div class="search-box">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search your games..."
+            id="searchInput"
+            oninput="searchGames()"
+          />
+        </div>
+      </section>
+
+      <section class="games-list" id="gamesList">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading your games...
+        </div>
+      </section>
+
+      <div class="empty-state" id="emptyState" style="display: none">
+        <div class="empty-icon">🎮</div>
+        <h2 class="empty-title">No games in your list yet</h2>
+        <p class="empty-description">
+          Start building your game collection by discovering and adding games
+          you want to play!
+        </p>
+        <a href="game_tracker.html" class="btn-primary">Discover Games</a>
+      </div>
+    </main>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+      let userGamesList = [];
+      let currentFilter = "all";
+      let currentSort = "dateAdded";
+      let currentSearch = "";
+
+      function checkAuth() {
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (!token || !user) {
+          window.location.href = "sign_in.html";
+          return false;
+        }
+
+        const currentUser = JSON.parse(user);
+        document.querySelector(".user-avatar").textContent =
+          currentUser.displayName.charAt(0).toUpperCase();
+        return true;
+      }
+
+      async function makeAuthenticatedRequest(url, options = {}) {
+        const token = localStorage.getItem("token");
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...options.headers,
+        };
+
+        try {
+          const response = await fetch(url, { ...options, headers });
+
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "sign_in.html";
+            return null;
+          }
+
+          return response;
+        } catch (error) {
+          console.error("Request error:", error);
+          return null;
+        }
+      }
+
+      async function loadUserGames() {
+        try {
+          const params = new URLSearchParams({
+            status: currentFilter !== "all" ? currentFilter : "",
+            sort: currentSort,
+            search: currentSearch,
+            limit: 50,
+          });
+
+          const response = await makeAuthenticatedRequest(
+            `${API_BASE_URL}/lists?${params}`
+          );
+
+          if (!response || !response.ok) {
+            throw new Error("Failed to load games");
+          }
+
+          const data = await response.json();
+          userGamesList = data.games || [];
+
+          updateStats();
+          renderGamesList(userGamesList);
+        } catch (error) {
+          console.error("Error loading user games:", error);
+          document.getElementById("gamesList").innerHTML =
+            '<p style="color: #ff6b6b;">Error loading games. Please try again.</p>';
+        }
+      }
+
+      async function loadStats() {
+        try {
+          const response = await makeAuthenticatedRequest(
+            `${API_BASE_URL}/lists/stats`
+          );
+
+          if (response && response.ok) {
+            const data = await response.json();
+            updateStatsFromAPI(data.basicStats);
+          }
+        } catch (error) {
+          console.error("Error loading stats:", error);
+        }
+      }
+
+      function updateStatsFromAPI(stats) {
+        document.getElementById("totalGames").textContent = stats.total || 0;
+        document.getElementById("completedGames").textContent =
+          stats.completed || 0;
+        document.getElementById("currentlyPlaying").textContent =
+          stats.playing || 0;
+        document.getElementById("averageRating").textContent =
+          stats.averageRating ? stats.averageRating.toFixed(1) : "0";
+      }
+
+      function updateStats() {
+        const totalGames = userGamesList.length;
+        const completedGames = userGamesList.filter(
+          (item) => item.status === "completed"
+        ).length;
+        const currentlyPlaying = userGamesList.filter(
+          (item) => item.status === "playing"
+        ).length;
+
+        const ratedGames = userGamesList.filter(
+          (item) => item.rating && item.rating > 0
+        );
+        const averageRating =
+          ratedGames.length > 0
+            ? (
+                ratedGames.reduce((sum, item) => sum + item.rating, 0) /
+                ratedGames.length
+              ).toFixed(1)
+            : 0;
+
+        document.getElementById("totalGames").textContent = totalGames;
+        document.getElementById("completedGames").textContent = completedGames;
+        document.getElementById("currentlyPlaying").textContent =
+          currentlyPlaying;
+        document.getElementById("averageRating").textContent = averageRating;
+      }
+
+      function getStatusLabel(status) {
+        const statusLabels = {
+          playing: "Currently Playing",
+          completed: "Completed",
+          planned: "Plan to Play",
+          dropped: "Dropped",
+          paused: "Paused",
+        };
+        return statusLabels[status] || status;
+      }
+
+      function renderGamesList(games) {
+        const gamesList = document.getElementById("gamesList");
+        const emptyState = document.getElementById("emptyState");
+
+        if (games.length === 0) {
+          gamesList.style.display = "none";
+          emptyState.style.display = "block";
+          return;
+        }
+
+        gamesList.style.display = "flex";
+        emptyState.style.display = "none";
+
+        gamesList.innerHTML = games
+          .map((item) => {
+            const game = item.gameInfo || item.game || {};
+            const statusClass = item.status === "playing" ? "playing" : "";
+
+            return `
+            <div class="game-item" onclick="openGameDetails('${
+              game.id || item.gameId
+            }')">
+              <div class="game-cover">
+                <img src="${
+                  game.images?.cover ||
+                  game.cover ||
+                  "https://via.placeholder.com/80x110/333/0088FF?text=Game"
+                }" 
+                     alt="${game.title || "Game"}" 
+                     onerror="this.src='https://via.placeholder.com/80x110/333/0088FF?text=${encodeURIComponent(
+                       (game.title || "G").substring(0, 2)
+                     )}'">
+              </div>
+              
+              <div class="game-info">
+                <h3 class="game-title">${game.title || "Unknown Game"}</h3>
+                <div class="game-meta">${game.developer || "Unknown"} • ${
+              game.releaseDate
+                ? new Date(game.releaseDate).getFullYear()
+                : "TBA"
+            }</div>
+                <span class="game-status status-${
+                  item.status
+                }">${getStatusLabel(item.status)}</span>
+                
+                ${
+                  item.rating
+                    ? `
+                  <div class="game-rating">
+                    <span class="user-rating">★ ${item.rating}/5</span>
+                    <span style="color: #bbb;">• Your Rating</span>
+                  </div>
+                `
+                    : ""
+                }
+                
+                ${
+                  item.hoursPlayed > 0
+                    ? `
+                  <div style="color: #bbb; font-size: 0.85rem; margin-top: 0.3rem;">
+                    🕐 ${item.hoursPlayed} hours played
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+              
+              <div class="game-actions" onclick="event.stopPropagation()">
+                <button class="action-btn btn-edit" onclick="editGame('${
+                  item.id
+                }')">
+                  ✏️ Edit
+                </button>
+                <button class="action-btn btn-remove" onclick="removeGame('${
+                  item.id
+                }')">
+                  🗑️ Remove
+                </button>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+      }
+
+      function filterByStatus(status) {
+        currentFilter = status;
+
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+
+        loadUserGames();
+      }
+
+      function sortGames() {
+        currentSort = document.getElementById("sortSelect").value;
+        loadUserGames();
+      }
+
+      function searchGames() {
+        currentSearch = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        loadUserGames();
+      }
+
+      function openGameDetails(gameId) {
+        window.location.href = `game_details.html?id=${gameId}`;
+      }
+
+      async function editGame(userGameId) {
+        const item = userGamesList.find((g) => g.id === userGameId);
+        if (!item) return;
+
+        const game = item.gameInfo || item.game || {};
+        const currentStatus = item.status;
+
+        const newStatus = prompt(
+          `Edit status for "${game.title}":\n\nCurrent: ${getStatusLabel(
+            currentStatus
+          )}\n\nEnter new status:\n1 - Plan to Play\n2 - Currently Playing\n3 - Completed\n4 - Dropped\n5 - Paused`,
+          currentStatus === "planned"
+            ? "1"
+            : currentStatus === "playing"
+            ? "2"
+            : currentStatus === "completed"
+            ? "3"
+            : currentStatus === "dropped"
+            ? "4"
+            : "5"
+        );
+
+        if (newStatus === null) return;
+
+        const statusMap = {
+          1: "planned",
+          2: "playing",
+          3: "completed",
+          4: "dropped",
+          5: "paused",
+        };
+
+        if (!statusMap[newStatus]) {
+          alert("Invalid status. Please try again.");
+          return;
+        }
+
+        try {
+          let rating = item.rating;
+          if (statusMap[newStatus] === "completed" && !rating) {
+            const ratingInput = prompt(`Rate "${game.title}" (1-5):`, "");
+            if (
+              ratingInput &&
+              !isNaN(ratingInput) &&
+              ratingInput >= 1 &&
+              ratingInput <= 5
+            ) {
+              rating = parseInt(ratingInput);
+            }
+          }
+
+          const updateData = {
+            status: statusMap[newStatus],
+          };
+
+          if (rating) {
+            updateData.rating = rating;
+          }
+
+          const response = await makeAuthenticatedRequest(
+            `${API_BASE_URL}/lists/${userGameId}`,
+            {
+              method: "PUT",
+              body: JSON.stringify(updateData),
+            }
+          );
+
+          if (response && response.ok) {
+            alert(`"${game.title}" updated successfully!`);
+            loadUserGames();
+            loadStats();
+          } else {
+            const errorData = await response?.json();
+            alert(errorData?.message || "Failed to update game");
+          }
+        } catch (error) {
+          console.error("Error updating game:", error);
+          alert("Error updating game");
+        }
+      }
+
+      async function removeGame(userGameId) {
+        const item = userGamesList.find((g) => g.id === userGameId);
+        if (!item) return;
+
+        const game = item.gameInfo || item.game || {};
+
+        if (
+          !confirm(
+            `Are you sure you want to remove "${game.title}" from your list?`
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await makeAuthenticatedRequest(
+            `${API_BASE_URL}/lists/${userGameId}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (response && response.ok) {
+            alert(`"${game.title}" removed from your list.`);
+            loadUserGames();
+            loadStats();
+          } else {
+            const errorData = await response?.json();
+            alert(errorData?.message || "Failed to remove game");
+          }
+        } catch (error) {
+          console.error("Error removing game:", error);
+          alert("Error removing game");
+        }
+      }
+
+      function showFeature(feature) {
+        if (feature === "Profile") {
+          window.location.href = "profile.html";
+          return;
+        }
+        alert(
+          `${feature} feature coming soon! 🚀\n\nThis will include:\n• ${feature} management\n• Social interactions\n• Enhanced tracking`
+        );
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        if (checkAuth()) {
+          loadUserGames();
+          loadStats();
+        }
+
+        const searchInput = document.getElementById("searchInput");
+        let searchTimeout;
+
+        searchInput.addEventListener("input", function () {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(searchGames, 300);
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+            e.preventDefault();
+            searchInput.focus();
+          }
+
+          if (e.key === "Escape" && document.activeElement === searchInput) {
+            searchInput.value = "";
+            currentSearch = "";
+            loadUserGames();
+          }
+        });
+
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.type === "childList") {
+              const newItems = document.querySelectorAll(".game-item");
+              newItems.forEach((item, index) => {
+                item.style.opacity = "0";
+                item.style.transform = "translateY(20px)";
+                setTimeout(() => {
+                  item.style.transition = "all 0.3s ease";
+                  item.style.opacity = "1";
+                  item.style.transform = "translateY(0)";
+                }, index * 50);
+              });
+            }
+          });
+        });
+
+        observer.observe(document.getElementById("gamesList"), {
+          childList: true,
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+[
+  {
+    "id": "3062e2e4881e8d64accca1d5",
+    "title": "Hollow Knight: Silksong",
+    "description": "Hollow Knight: Silksong é um futuro jogo de ação e aventura metroidvania desenvolvido e publicado pela Team Cherry para Windows, macOS, Linux, Nintendo Switch, Xbox One, Xbox Series X/S, PlayStation 4, e PlayStation 5.",
+    "developer": "Team Cherry",
+    "publisher": "Team Cherry",
+    "releaseDate": "2025-02-30",
+    "genres": [
+      "Metroidvania",
+      "Action",
+      "Adventure"
+    ],
+    "platforms": [
+      "PC",
+      "PlayStation",
+      "Xbox",
+      "Nintendo Switch"
+    ],
+    "tags": [
+      "Souls-like",
+      "Action",
+      "PC",
+      "Gamepass"
+    ],
+    "images": {
+      "cover": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1030300/header.jpg?t=1742776298",
+      "banner": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1030300/header.jpg?t=1742776298",
+      "screenshots": []
+    },
+    "ratings": {
+      "average": 5,
+      "count": 1,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 1
+      }
+    },
+    "metadata": {
+      "isReleased": false,
+      "website": "",
+      "trailer": ""
+    },
+    "stats": {
+      "totalPlayers": 1,
+      "averagePlaytime": 0,
+      "completionRate": 0
+    },
+    "createdAt": "2025-06-24T22:50:18.053Z",
+    "updatedAt": "2025-06-25T02:22:18.602Z"
+  },
+  {
+    "id": "b2bc78a7442bc856cee2668f",
+    "title": "Cyberpunk 2077",
+    "description": "Open-world action-adventure story set in Night City, a megalopolis obsessed with power, glamour and body modification.",
+    "developer": "CD Projekt RED",
+    "publisher": "CD Projekt",
+    "releaseDate": "2020-12-10",
+    "genres": [
+      "RPG",
+      "Action",
+      "Open World"
+    ],
+    "platforms": [
+      "PC",
+      "PlayStation",
+      "Xbox"
+    ],
+    "tags": [
+      "Cyberpunk",
+      "RPG",
+      "Open World",
+      "Futuristic"
+    ],
+    "images": {
+      "cover": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/e9047d8ec47ae3d94bb8b464fb0fc9e9972b4ac7/header.jpg?t=1749198613",
+      "banner": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/e9047d8ec47ae3d94bb8b464fb0fc9e9972b4ac7/header.jpg?t=1749198613",
+      "screenshots": []
+    },
+    "ratings": {
+      "average": 8,
+      "count": 1,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 0
+      }
+    },
+    "metadata": {
+      "isReleased": true,
+      "website": "https://www.cyberpunk.net",
+      "trailer": ""
+    },
+    "stats": {
+      "totalPlayers": 1,
+      "averagePlaytime": 0,
+      "completionRate": 0
+    },
+    "createdAt": "2025-06-24T22:50:18.053Z",
+    "updatedAt": "2025-06-24T23:16:39.593Z"
+  },
+  {
+    "id": "ec3ee26c3c547fefd1f66609",
+    "title": "The Witcher 3: Wild Hunt",
+    "description": "As war rages on throughout the Northern Realms, you take on the greatest contract of your life — tracking down the Child of Prophecy, a living weapon that can alter the shape of the world.",
+    "developer": "CD Projekt RED",
+    "publisher": "CD Projekt",
+    "releaseDate": "2015-05-19",
+    "genres": [
+      "RPG",
+      "Fantasy",
+      "Open World"
+    ],
+    "platforms": [
+      "PC",
+      "PlayStation",
+      "Xbox",
+      "Nintendo Switch"
+    ],
+    "tags": [
+      "Fantasy",
+      "RPG",
+      "Open World",
+      "Story Rich"
+    ],
+    "images": {
+      "cover": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/ad9240e088f953a84aee814034c50a6a92bf4516/header.jpg?t=1749199563",
+      "banner": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/ad9240e088f953a84aee814034c50a6a92bf4516/header.jpg?t=1749199563",
+      "screenshots": []
+    },
+    "ratings": {
+      "average": 10,
+      "count": 1,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 1
+      }
+    },
+    "metadata": {
+      "isReleased": true,
+      "website": "https://thewitcher.com",
+      "trailer": ""
+    },
+    "stats": {
+      "totalPlayers": 1,
+      "averagePlaytime": 0,
+      "completionRate": 0
+    },
+    "createdAt": "2025-06-24T22:50:18.053Z",
+    "updatedAt": "2025-06-24T23:28:43.259Z"
+  }
+]

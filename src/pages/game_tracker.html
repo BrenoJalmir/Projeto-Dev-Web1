@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GameTracker - Discover Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/game_tracker.css" />
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <a href="game_tracker.html" class="logo">GameTracker</a>
+        <ul class="nav-links">
+          <li><a href="#" onclick="loadGames('popular')">Popular</a></li>
+          <li><a href="#" onclick="loadGames('recent')">Recent</a></li>
+          <li><a href="#" onclick="loadGames('upcoming')">Upcoming</a></li>
+          <li><a href="my_list.html">My List</a></li>
+        </ul>
+        <a class="user-menu" href="profile.html">
+          <div class="user-avatar">U</div>
+        </a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section class="hero-section">
+        <h1 class="hero-title">Discover Amazing Games</h1>
+        <p class="hero-subtitle">
+          Track, rate, and discover your next favorite game
+        </p>
+
+        <div class="search-container">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search for games..."
+            id="searchInput"
+          />
+        </div>
+      </section>
+
+      <section class="filters">
+        <button class="filter-btn active" onclick="filterGames('all')">
+          All Games
+        </button>
+        <button class="filter-btn" onclick="filterGames('Action')">
+          Action
+        </button>
+        <button class="filter-btn" onclick="filterGames('Adventure')">
+          Adventure
+        </button>
+        <button class="filter-btn" onclick="filterGames('RPG')">RPG</button>
+        <button class="filter-btn" onclick="filterGames('Strategy')">
+          Strategy
+        </button>
+        <button class="filter-btn" onclick="filterGames('Indie')">Indie</button>
+      </section>
+
+      <section class="games-section">
+        <h2 class="section-title" id="sectionTitle">Popular Games</h2>
+        <div class="games-grid" id="gamesGrid">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading games...
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+      let currentFilter = "all";
+      let currentGames = [];
+      let currentUser = null;
+
+      function checkAuth() {
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (!token || !user) {
+          window.location.href = "sign_in.html";
+          return false;
+        }
+
+        currentUser = JSON.parse(user);
+        document.querySelector(".user-avatar").textContent =
+          currentUser.displayName.charAt(0).toUpperCase();
+        return true;
+      }
+
+      async function makeAuthenticatedRequest(url, options = {}) {
+        const token = localStorage.getItem("token");
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...options.headers,
+        };
+
+        try {
+          const response = await fetch(url, { ...options, headers });
+
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "sign_in.html";
+            return null;
+          }
+
+          return response;
+        } catch (error) {
+          console.error("Request error:", error);
+          return null;
+        }
+      }
+
+      function renderGames(games) {
+        const gamesGrid = document.getElementById("gamesGrid");
+
+        if (games.length === 0) {
+          gamesGrid.innerHTML =
+            '<p style="text-align: center; color: #bbb;">No games found</p>';
+          return;
+        }
+
+        gamesGrid.innerHTML = games
+          .map(
+            (game) => `
+        <div class="game-card" onclick="openGameDetails('${game.id}')">
+          <div class="game-image">
+            <img src="${game.images.cover}" alt="${game.title}" 
+                 onerror="this.src='https://via.placeholder.com/250x140/333/0088FF?text=${encodeURIComponent(
+                   game.title.substring(0, 3)
+                 )}'">
+          </div>
+          <div class="game-info">
+            <h3 class="game-title">${game.title}</h3>
+            <div class="game-meta">
+              <span>${new Date(game.releaseDate).getFullYear()}</span>
+              <div class="game-rating">
+                <span class="stars">★</span>
+                <span>${game.ratings.average.toFixed(1)}/10</span>
+              </div>
+            </div>
+            <div class="game-tags">
+              ${game.genres
+                .slice(0, 2)
+                .map((genre) => `<span class="tag">${genre}</span>`)
+                .join("")}
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-primary" onclick="event.stopPropagation(); addToList('${
+                game.id
+              }')">Add to List</button>
+              <button class="btn btn-secondary" onclick="event.stopPropagation(); openRatingModal('${
+                game.id
+              }')">Rate</button>
+            </div>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      async function loadGames(category) {
+        const sectionTitle = document.getElementById("sectionTitle");
+        const gamesGrid = document.getElementById("gamesGrid");
+
+        gamesGrid.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading ${category} games...
+        </div>
+      `;
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/games?limit=20`);
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch games");
+          }
+
+          const data = await response.json();
+          const games = data.games || [];
+
+          switch (category) {
+            case "popular":
+              sectionTitle.textContent = "Popular Games";
+              break;
+            case "recent":
+              sectionTitle.textContent = "Recent Games";
+              break;
+            case "upcoming":
+              sectionTitle.textContent = "Upcoming Games";
+              break;
+          }
+
+          currentGames = games;
+          renderGames(games);
+        } catch (error) {
+          console.error("Error loading games:", error);
+          gamesGrid.innerHTML =
+            '<p style="text-align: center; color: #ff6b6b;">Error loading games. Please try again.</p>';
+        }
+      }
+
+      function filterGames(category) {
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+
+        currentFilter = category;
+
+        let filteredGames = currentGames;
+        if (category !== "all") {
+          filteredGames = currentGames.filter(
+            (game) =>
+              game.genres.some((genre) =>
+                genre.toLowerCase().includes(category.toLowerCase())
+              ) ||
+              game.tags.some((tag) =>
+                tag.toLowerCase().includes(category.toLowerCase())
+              )
+          );
+        }
+
+        renderGames(filteredGames);
+      }
+
+      function openGameDetails(gameId) {
+        window.location.href = `game_details.html?id=${gameId}`;
+      }
+
+      async function addToList(gameId) {
+        try {
+          const response = await makeAuthenticatedRequest(
+            `${API_BASE_URL}/games/${gameId}/add-to-list`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                status: "planned",
+              }),
+            }
+          );
+
+          if (response && response.ok) {
+            const data = await response.json();
+            alert("Game added to your list!");
+          } else {
+            const errorData = await response.json();
+            alert(errorData.message || "Failed to add game to list");
+          }
+        } catch (error) {
+          console.error("Error adding to list:", error);
+          alert("Error adding game to list");
+        }
+      }
+
+      function openRatingModal(gameId) {
+        window.location.href = `rate_game.html?id=${gameId}`;
+      }
+
+      function toggleUserMenu() {
+        const options = [
+          {
+            text: "Profile",
+            action: () => (window.location.href = "profile.html"),
+          },
+          {
+            text: "My List",
+            action: () => (window.location.href = "my_list.html"),
+          },
+          { text: "Settings", action: () => alert("Settings coming soon!") },
+          { text: "Logout", action: logout },
+        ];
+
+        alert("User Menu:\n- Profile\n- My List\n- Settings\n- Logout");
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "sign_in.html";
+      }
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", async function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+
+          if (searchTerm.length < 2) {
+            renderGames(currentGames);
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/games/search?q=${encodeURIComponent(
+                searchTerm
+              )}&limit=20`
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              renderGames(data.games || []);
+            }
+          } catch (error) {
+            console.error("Search error:", error);
+          }
+        });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        if (checkAuth()) {
+          loadGames("popular");
+        }
+      });
+    </script>
+  </body>
+</html>

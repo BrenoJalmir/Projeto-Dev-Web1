@@ -1,11 +1,250 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up</title>
-</head>
-<body>
-  <h1>WIP</h1>
-</body>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - GameTracker</title>
+    <link rel="stylesheet" href="../css/sign_up.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="box">
+        <form id="signupForm">
+          <h2>Create Account</h2>
+
+          <div id="inputs">
+            <div>
+              <label for="email-input">EMAIL</label>
+              <input
+                type="email"
+                name="email"
+                id="email-input"
+                placeholder="your.email@example.com"
+                required
+              />
+              <div class="error-message" id="email-error">
+                Please enter a valid email address
+              </div>
+            </div>
+
+            <div>
+              <label for="username-input">USERNAME</label>
+              <input
+                type="text"
+                name="username"
+                id="username-input"
+                placeholder="Choose a username"
+                required
+              />
+              <div class="error-message" id="username-error">
+                Username must be at least 3 characters
+              </div>
+            </div>
+
+            <div>
+              <label for="display-name-input">DISPLAY NAME</label>
+              <input
+                type="text"
+                name="displayName"
+                id="display-name-input"
+                placeholder="Your display name"
+                required
+              />
+              <div class="error-message" id="display-name-error">
+                Display name is required
+              </div>
+            </div>
+
+            <div>
+              <label for="password-input">PASSWORD</label>
+              <input
+                type="password"
+                name="password"
+                id="password-input"
+                placeholder="Create a strong password"
+                required
+              />
+              <div class="error-message" id="password-error">
+                Password must be at least 6 characters
+              </div>
+            </div>
+
+            <div>
+              <label for="confirm-password-input">CONFIRM PASSWORD</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                id="confirm-password-input"
+                placeholder="Confirm your password"
+                required
+              />
+              <div class="error-message" id="confirm-password-error">
+                Passwords do not match
+              </div>
+            </div>
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="terms-checkbox" required />
+            <label for="terms-checkbox"
+              >I agree with the
+              <a href="#" target="_blank">Terms of Service</a></label
+            >
+          </div>
+
+          <div
+            id="error-message"
+            style="
+              display: none;
+              color: #ff6b6b;
+              text-align: center;
+              margin: 1rem 0;
+              font-size: 0.9rem;
+            "
+          ></div>
+
+          <button type="submit" id="signup-btn">Create Account</button>
+
+          <p>Already have an account?</p>
+          <p><a href="sign_in.html">Sign in here</a></p>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const email = document.getElementById("email-input").value;
+          const username = document.getElementById("username-input").value;
+          const displayName =
+            document.getElementById("display-name-input").value;
+          const password = document.getElementById("password-input").value;
+          const confirmPassword = document.getElementById(
+            "confirm-password-input"
+          ).value;
+          const termsAccepted =
+            document.getElementById("terms-checkbox").checked;
+
+          const errorDiv = document.getElementById("error-message");
+          const signupBtn = document.getElementById("signup-btn");
+
+          let isValid = true;
+
+          document
+            .querySelectorAll(".error-message")
+            .forEach((msg) => (msg.style.display = "none"));
+          errorDiv.style.display = "none";
+
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            document.getElementById("email-error").style.display = "block";
+            isValid = false;
+          }
+
+          if (username.length < 3) {
+            document.getElementById("username-error").style.display = "block";
+            isValid = false;
+          }
+
+          if (!displayName.trim()) {
+            document.getElementById("display-name-error").style.display =
+              "block";
+            isValid = false;
+          }
+
+          if (password.length < 6) {
+            document.getElementById("password-error").style.display = "block";
+            isValid = false;
+          }
+
+          if (password !== confirmPassword) {
+            document.getElementById("confirm-password-error").style.display =
+              "block";
+            isValid = false;
+          }
+
+          if (!termsAccepted) {
+            errorDiv.textContent = "You must accept the Terms of Service";
+            errorDiv.style.display = "block";
+            isValid = false;
+          }
+
+          if (!isValid) return;
+
+          signupBtn.disabled = true;
+          signupBtn.textContent = "Creating Account...";
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                username,
+                displayName,
+                password,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("user", JSON.stringify(data.user));
+
+              alert("Account created successfully! Welcome to GameTracker!");
+              window.location.href = "game_tracker.html";
+            } else {
+              if (data.errors) {
+                data.errors.forEach((error) => {
+                  if (error.path === "email") {
+                    document.getElementById("email-error").textContent =
+                      error.msg;
+                    document.getElementById("email-error").style.display =
+                      "block";
+                  } else if (error.path === "username") {
+                    document.getElementById("username-error").textContent =
+                      error.msg;
+                    document.getElementById("username-error").style.display =
+                      "block";
+                  } else if (error.path === "password") {
+                    document.getElementById("password-error").textContent =
+                      error.msg;
+                    document.getElementById("password-error").style.display =
+                      "block";
+                  }
+                });
+              } else {
+                errorDiv.textContent = data.message || "Registration failed";
+                errorDiv.style.display = "block";
+              }
+            }
+          } catch (error) {
+            console.error("Registration error:", error);
+            errorDiv.textContent = "Network error. Please try again.";
+            errorDiv.style.display = "block";
+          } finally {
+            signupBtn.disabled = false;
+            signupBtn.textContent = "Create Account";
+          }
+        });
+
+      if (localStorage.getItem("token")) {
+        window.location.href = "game_tracker.html";
+      }
+    </script>
+  </body>
 </html>
