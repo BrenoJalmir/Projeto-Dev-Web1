@@ -4,9 +4,8 @@ const { reviews, games, userGames, users } = require("../utils/database");
 const auth = require("../middleware/auth");
 const router = express.Router();
 
-//Create a new review
 router.post(
-  "/",
+  "/write",
   auth,
   [
     body("gameId").notEmpty().withMessage("Valid game ID is required"),
@@ -14,8 +13,19 @@ router.post(
       .isInt({ min: 1, max: 5 })
       .withMessage("Rating must be between 1 and 5"),
     body("content")
-      .isLength({ min: 10, max: 2000 })
-      .withMessage("Review content must be between 10 and 2000 characters"),
+      .optional()
+      .custom((value) => {
+        if (
+          value &&
+          value.trim() &&
+          (value.trim().length < 10 || value.trim().length > 2000)
+        ) {
+          throw new Error(
+            "Review content must be between 10 and 2000 characters when provided"
+          );
+        }
+        return true;
+      }),
     body("platform")
       .isIn([
         "PC",
@@ -65,13 +75,11 @@ router.post(
 
       const userId = req.user.userId;
 
-      //Check if game exists
       const game = games.getById(gameId);
       if (!game) {
         return res.status(404).json({ message: "Game not found" });
       }
 
-      //Check if user already reviewed this game
       const existingReviews = reviews.getAll();
       const existingReview = existingReviews.find(
         (review) =>
@@ -85,22 +93,23 @@ router.post(
           .json({ message: "You have already reviewed this game" });
       }
 
-      //Create the review
-      const newReview = reviews.create({
-        userId,
-        gameId,
-        rating,
-        content,
-        platform,
-        title,
-        hoursPlayed,
-        containsSpoilers,
-        isRecommended,
-        pros,
-        cons,
-      });
+      let newReview = null;
+      if (content && content.trim() && content.trim().length >= 10) {
+        newReview = reviews.create({
+          userId,
+          gameId,
+          rating,
+          content: content.trim(),
+          platform,
+          title,
+          hoursPlayed,
+          containsSpoilers,
+          isRecommended,
+          pros,
+          cons,
+        });
+      }
 
-      //Update or create user game entry
       let userGame = userGames.getByUserAndGame(userId, gameId);
       if (!userGame) {
         userGame = userGames.create({
@@ -113,37 +122,40 @@ router.post(
         });
       } else {
         const updateData = {};
-        if (!userGame.rating) updateData.rating = rating;
+        updateData.rating = rating;
         if (!userGame.platform) updateData.platform = platform;
         if (hoursPlayed && hoursPlayed > (userGame.hoursPlayed || 0)) {
           updateData.hoursPlayed = hoursPlayed;
         }
-        if (Object.keys(updateData).length > 0) {
-          userGames.update(userGame.id, updateData);
-        }
+        userGames.update(userGame.id, updateData);
       }
 
-      //Get populated review data
       const user = users.getById(userId);
-      const populatedReview = {
-        ...newReview,
-        user: {
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName,
-          avatar: user.avatar,
-        },
-        game: {
-          id: game.id,
-          title: game.title,
-          images: { cover: game.images.cover },
-        },
+      const responseData = {
+        message: newReview
+          ? "Review created successfully"
+          : "Rating submitted successfully",
       };
 
-      res.status(201).json({
-        message: "Review created successfully",
-        review: populatedReview,
-      });
+      if (newReview) {
+        const populatedReview = {
+          ...newReview,
+          user: {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            avatar: user.avatar,
+          },
+          game: {
+            id: game.id,
+            title: game.title,
+            images: { cover: game.images.cover },
+          },
+        };
+        responseData.review = populatedReview;
+      }
+
+      res.status(201).json(responseData);
     } catch (error) {
       console.error("Create review error:", error);
       res.status(500).json({ message: "Server error" });
@@ -151,7 +163,6 @@ router.post(
   }
 );
 
-//Get a specific review
 router.get("/:reviewId", async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -194,7 +205,6 @@ router.get("/:reviewId", async (req, res) => {
   }
 });
 
-//Update a review
 router.put(
   "/:reviewId",
   auth,
@@ -235,7 +245,6 @@ router.put(
       const updates = req.body;
       const updatedReview = reviews.update(reviewId, updates);
 
-      //Update user game rating if provided
       if (updates.rating) {
         const userGame = userGames.getByUserAndGame(userId, review.gameId);
         if (userGame) {
@@ -243,7 +252,6 @@ router.put(
         }
       }
 
-      //Get populated review data
       const user = users.getById(userId);
       const game = games.getById(review.gameId);
 
@@ -273,7 +281,6 @@ router.put(
   }
 );
 
-//Delete a review (soft delete)
 router.delete("/:reviewId", auth, async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -299,7 +306,6 @@ router.delete("/:reviewId", auth, async (req, res) => {
   }
 });
 
-//Mark review as helpful/unhelpful
 router.post("/:reviewId/helpful", auth, async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -321,12 +327,10 @@ router.post("/:reviewId/helpful", auth, async (req, res) => {
     let isHelpful;
 
     if (userIndex > -1) {
-      //Remove helpful vote
       helpfulVotes.users.splice(userIndex, 1);
       helpfulVotes.count = Math.max(0, helpfulVotes.count - 1);
       isHelpful = false;
     } else {
-      //Add helpful vote
       helpfulVotes.users.push(userId);
       helpfulVotes.count++;
       isHelpful = true;
@@ -345,7 +349,6 @@ router.post("/:reviewId/helpful", auth, async (req, res) => {
   }
 });
 
-//Report a review
 router.post(
   "/:reviewId/report",
   auth,
@@ -410,7 +413,6 @@ router.post(
   }
 );
 
-//Get reviews for a specific game
 router.get("/game/:gameId", async (req, res) => {
   try {
     const { gameId } = req.params;
@@ -428,7 +430,6 @@ router.get("/game/:gameId", async (req, res) => {
 
     let gameReviews = reviews.getByGameId(gameId);
 
-    //Filter reviews
     if (filterBy !== "all") {
       switch (filterBy) {
         case "recommended":
@@ -446,7 +447,6 @@ router.get("/game/:gameId", async (req, res) => {
       }
     }
 
-    //Sort reviews
     switch (sortBy) {
       case "newest":
         gameReviews.sort(
@@ -486,12 +486,10 @@ router.get("/game/:gameId", async (req, res) => {
         break;
     }
 
-    //Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + parseInt(limit);
     const paginatedReviews = gameReviews.slice(startIndex, endIndex);
 
-    //Populate reviews with user and game data
     const populatedReviews = paginatedReviews.map((review) => {
       const user = users.getById(review.userId);
       return {
@@ -510,7 +508,6 @@ router.get("/game/:gameId", async (req, res) => {
       };
     });
 
-    //Calculate rating statistics
     const ratingStats = {
       average: 0,
       total: gameReviews.length,
@@ -551,7 +548,6 @@ router.get("/game/:gameId", async (req, res) => {
   }
 });
 
-//Get reviews by a specific user
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -620,7 +616,6 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
-//Get all reviews with filters
 router.get("/", async (req, res) => {
   try {
     const {
@@ -635,7 +630,6 @@ router.get("/", async (req, res) => {
       .getAll()
       .filter((review) => review.status === "active");
 
-    //Apply filters
     if (rating) {
       allReviews = allReviews.filter(
         (review) => review.rating === parseInt(rating)
@@ -646,7 +640,6 @@ router.get("/", async (req, res) => {
       allReviews = allReviews.filter((review) => review.platform === platform);
     }
 
-    //Sort reviews
     switch (sortBy) {
       case "newest":
         allReviews.sort(
@@ -686,12 +679,10 @@ router.get("/", async (req, res) => {
         break;
     }
 
-    //Pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + parseInt(limit);
     const paginatedReviews = allReviews.slice(startIndex, endIndex);
 
-    //Populate reviews with user and game data
     const populatedReviews = paginatedReviews.map((review) => {
       const user = users.getById(review.userId);
       const game = games.getById(review.gameId);

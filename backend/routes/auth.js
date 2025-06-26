@@ -91,7 +91,7 @@ router.post(
 );
 
 router.post(
-  "/login",
+  "/sign_in",
   [
     body("email")
       .isEmail()
@@ -145,8 +145,10 @@ router.post(
 router.get("/me", auth, async (req, res) => {
   try {
     const user = users.getById(req.user.userId);
+    console.log("Retrieved user:", user);
 
     if (!user) {
+      console.log("User not found");
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -163,6 +165,86 @@ router.get("/me", auth, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+router.put(
+  "/me",
+  auth,
+  [
+    body("displayName")
+      .optional()
+      .isLength({ min: 1, max: 50 })
+      .withMessage("Display name must be between 1 and 50 characters"),
+    body("email")
+      .optional()
+      .isEmail()
+      .normalizeEmail()
+      .withMessage("Please provide a valid email"),
+    body("bio")
+      .optional()
+      .isLength({ max: 500 })
+      .withMessage("Bio must be less than 500 characters"),
+    body("location")
+      .optional()
+      .isLength({ max: 100 })
+      .withMessage("Location must be less than 100 characters"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: "Validation errors",
+          errors: errors.array(),
+        });
+      }
+
+      const userId = req.user.userId;
+      const user = users.getById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { displayName, email, bio, location } = req.body;
+      const updateData = {};
+
+      if (displayName !== undefined) updateData.displayName = displayName;
+      if (bio !== undefined) updateData.bio = bio;
+      if (location !== undefined) updateData.location = location;
+
+      if (email !== undefined && email !== user.email) {
+        const existingUser = users.getByEmail(email);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({
+            message: "Email is already registered to another account",
+          });
+        }
+        updateData.email = email;
+      }
+
+      const updatedUser = users.update(userId, updateData);
+
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update profile" });
+      }
+
+      const {
+        password: _,
+        verificationToken: __,
+        resetPasswordToken: ___,
+        ...userResponse
+      } = updatedUser;
+
+      res.json({
+        message: "Profile updated successfully",
+        user: userResponse,
+      });
+    } catch (error) {
+      console.error("Update profile error:", error);
+      res.status(500).json({ message: "Server error during profile update" });
+    }
+  }
+);
 
 router.post("/logout", auth, (req, res) => {
   res.json({ message: "Logout successful" });

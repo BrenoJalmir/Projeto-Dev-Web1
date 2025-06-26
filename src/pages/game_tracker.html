@@ -22,9 +22,9 @@
           <li><a href="#" onclick="loadGames('upcoming')">Upcoming</a></li>
           <li><a href="my_list.html">My List</a></li>
         </ul>
-        <a class="user-menu" href="profile.html">
-          <div class="user-avatar">U</div>
-        </a>
+        <div class="user-menu">
+          <div class="user-avatar" onclick="goToProfile()">U</div>
+        </div>
       </nav>
     </header>
 
@@ -92,6 +92,11 @@
         document.querySelector(".user-avatar").textContent =
           currentUser.displayName.charAt(0).toUpperCase();
         return true;
+      }
+
+      function goToProfile() {
+        // Navigate to the current user's profile (no user parameter needed for own profile)
+        window.location.href = "profile.html";
       }
 
       async function makeAuthenticatedRequest(url, options = {}) {

@@ -471,7 +471,7 @@ router.put(
       const { userGameId } = req.params;
       const userId = req.user.userId;
 
-      const userGame = userGames.getById(userGameId);
+      const userGame = userGames.getByUserId(userGameId);
       if (!userGame || userGame.userId !== userId) {
         return res.status(404).json({ message: "Game not found in your list" });
       }
@@ -512,7 +512,7 @@ router.delete("/:userGameId", auth, async (req, res) => {
     const { userGameId } = req.params;
     const userId = req.user.userId;
 
-    const userGame = userGames.getById(userGameId);
+    const userGame = userGames.getByUserId(userGameId);
     if (!userGame || userGame.userId !== userId) {
       return res.status(404).json({ message: "Game not found in your list" });
     }
@@ -574,7 +574,7 @@ router.post("/:userGameId/favorite", auth, async (req, res) => {
     const { userGameId } = req.params;
     const userId = req.user.userId;
 
-    const userGame = userGames.getById(userGameId);
+    const userGame = userGames.getByUserId(userGameId);
     if (!userGame || userGame.userId !== userId) {
       return res.status(404).json({ message: "Game not found in your list" });
     }

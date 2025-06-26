@@ -29,14 +29,14 @@
       "screenshots": []
     },
     "ratings": {
-      "average": 5,
-      "count": 1,
+      "average": 0,
+      "count": 0,
       "distribution": {
         "1": 0,
         "2": 0,
         "3": 0,
         "4": 0,
-        "5": 1
+        "5": 0
       }
     },
     "metadata": {
@@ -45,12 +45,12 @@
       "trailer": ""
     },
     "stats": {
-      "totalPlayers": 1,
+      "totalPlayers": 0,
       "averagePlaytime": 0,
       "completionRate": 0
     },
     "createdAt": "2025-06-24T22:50:18.053Z",
-    "updatedAt": "2025-06-25T02:22:18.602Z"
+    "updatedAt": "2025-06-26T13:58:24.760Z"
   },
   {
     "id": "b2bc78a7442bc856cee2668f",
@@ -81,13 +81,13 @@
       "screenshots": []
     },
     "ratings": {
-      "average": 8,
-      "count": 1,
+      "average": 0,
+      "count": 0,
       "distribution": {
         "1": 0,
         "2": 0,
         "3": 0,
-        "4": 1,
+        "4": 0,
         "5": 0
       }
     },
@@ -97,12 +97,12 @@
       "trailer": ""
     },
     "stats": {
-      "totalPlayers": 1,
+      "totalPlayers": 0,
       "averagePlaytime": 0,
       "completionRate": 0
     },
     "createdAt": "2025-06-24T22:50:18.053Z",
-    "updatedAt": "2025-06-24T23:16:39.593Z"
+    "updatedAt": "2025-06-26T14:01:09.767Z"
   },
   {
     "id": "ec3ee26c3c547fefd1f66609",
@@ -134,14 +134,14 @@
       "screenshots": []
     },
     "ratings": {
-      "average": 10,
-      "count": 1,
+      "average": 0,
+      "count": 0,
       "distribution": {
         "1": 0,
         "2": 0,
         "3": 0,
         "4": 0,
-        "5": 1
+        "5": 0
       }
     },
     "metadata": {
@@ -150,11 +150,11 @@
       "trailer": ""
     },
     "stats": {
-      "totalPlayers": 1,
+      "totalPlayers": 0,
       "averagePlaytime": 0,
       "completionRate": 0
     },
     "createdAt": "2025-06-24T22:50:18.053Z",
-    "updatedAt": "2025-06-24T23:28:43.259Z"
+    "updatedAt": "2025-06-26T13:59:34.582Z"
   }
 ]

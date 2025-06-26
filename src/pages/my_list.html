@@ -22,7 +22,7 @@
           <li><a href="#" onclick="showFeature('Friends')">Friends</a></li>
           <li><a href="#" onclick="showFeature('Reviews')">Reviews</a></li>
         </ul>
-        <div class="user-avatar" onclick="showFeature('Profile')">U</div>
+        <div class="user-avatar" onclick="goToProfile()">U</div>
       </nav>
     </header>
 
@@ -125,9 +125,13 @@
         }
 
         const currentUser = JSON.parse(user);
-        document.querySelector(".user-avatar").textContent =
-          currentUser.displayName.charAt(0).toUpperCase();
+
         return true;
+      }
+
+      function goToProfile() {
+        // Navigate to the current user's profile (no user parameter needed for own profile)
+        window.location.href = "profile.html";
       }
 
       async function makeAuthenticatedRequest(url, options = {}) {

@@ -35,7 +35,7 @@
           <div class="current-rating">
             <span>★</span>
             <span id="currentRating">--</span>
-            <span>/10 (-- reviews)</span>
+            <span>/5 (-- reviews)</span>
           </div>
         </div>
       </div>
@@ -194,7 +194,7 @@
           ratingDisplay.innerHTML = `
             <span>★</span>
             <span>${currentGame.ratings.average.toFixed(1)}</span>
-            <span>/10 (${currentGame.ratings.count} reviews)</span>
+            <span>/5 (${currentGame.ratings.count} reviews)</span>
           `;
 
           document.title = `Rate ${currentGame.title} - GameTracker`;
@@ -286,6 +286,7 @@
             {
               method: "POST",
               body: JSON.stringify({
+                gameId: currentGameId,
                 rating: selectedRating,
                 platform: selectedPlatform,
               }),
@@ -295,23 +296,23 @@
           if (response && response.ok) {
             if (reviewText) {
               try {
-                await makeAuthenticatedRequest(`${API_BASE_URL}/reviews`, {
-                  method: "POST",
-                  body: JSON.stringify({
-                    game: currentGameId,
-                    rating: selectedRating,
-                    content: reviewText,
-                    platform: selectedPlatform,
-                    isRecommended: selectedRating >= 3,
-                  }),
-                });
+                const response = await makeAuthenticatedRequest(
+                  `${API_BASE_URL}/reviews/write`,
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      gameId: currentGameId,
+                      rating: selectedRating,
+                      content: reviewText,
+                      platform: selectedPlatform,
+                      isRecommended: selectedRating >= 3,
+                    }),
+                  }
+                );
               } catch (reviewError) {
                 console.error("Error submitting review:", reviewError);
               }
             }
-
-            document.getElementById("successMessage").style.display = "block";
-            window.scrollTo({ top: 0, behavior: "smooth" });
 
             setTimeout(() => {
               window.location.href = `game_details.html?id=${currentGameId}`;
@@ -329,7 +330,6 @@
           submitBtn.textContent = "Submit Rating";
         }
       }
-
       function updateCharCount() {
         const reviewText = document.getElementById("reviewText");
         const charCount = document.getElementById("charCount");
