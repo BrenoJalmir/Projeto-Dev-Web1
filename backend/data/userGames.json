@@ -1,0 +1,43 @@
+[
+  {
+    "id": "21e0cfaf1d2777b523cf4048",
+    "userId": "53e603cfc942bbfb0e358c47",
+    "gameId": "b2bc78a7442bc856cee2668f",
+    "status": "planned",
+    "hoursPlayed": 0,
+    "notes": "",
+    "dateAdded": "2025-06-24T23:16:39.585Z",
+    "progress": 0,
+    "isFavorite": true,
+    "createdAt": "2025-06-24T23:16:39.585Z",
+    "updatedAt": "2025-06-24T23:16:50.632Z"
+  },
+  {
+    "id": "9d50f8b1e02ca4472e61d69b",
+    "userId": "53e603cfc942bbfb0e358c47",
+    "gameId": "ec3ee26c3c547fefd1f66609",
+    "status": "planned",
+    "hoursPlayed": 0,
+    "notes": "",
+    "dateAdded": "2025-06-24T23:25:28.560Z",
+    "progress": 0,
+    "isFavorite": true,
+    "createdAt": "2025-06-24T23:25:28.560Z",
+    "updatedAt": "2025-06-24T23:28:44.464Z"
+  },
+  {
+    "id": "681bd983421975ca1a1bf56e",
+    "userId": "9e51d54399d2f555945ebd55",
+    "gameId": "3062e2e4881e8d64accca1d5",
+    "status": "planned",
+    "platform": "PC",
+    "rating": 5,
+    "hoursPlayed": 0,
+    "notes": "",
+    "dateAdded": "2025-06-25T02:19:14.052Z",
+    "progress": 0,
+    "isFavorite": true,
+    "createdAt": "2025-06-25T02:19:14.052Z",
+    "updatedAt": "2025-06-25T02:22:18.601Z"
+  }
+]

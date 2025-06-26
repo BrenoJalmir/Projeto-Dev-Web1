@@ -1,0 +1,32 @@
+[
+  {
+    "id": "9e51d54399d2f555945ebd55",
+    "username": "brenoj",
+    "email": "brenojalmir9@gmail.com",
+    "password": "$2a$12$pHJ./PiGuOeo0o9ggAHz/eyJRi3PzPC7ASJnbrNQ0iNm9Jtu/dQ.W",
+    "displayName": "brenoj",
+    "verificationToken": "530142202efb0c6117441720f5728b594b93b68df3b379857a3001aecfccbfb1",
+    "isVerified": false,
+    "avatar": "",
+    "bio": "",
+    "location": "",
+    "joinDate": "2025-06-25T02:14:47.321Z",
+    "followers": [],
+    "following": [],
+    "stats": {
+      "totalGames": 0,
+      "completedGames": 0,
+      "currentlyPlaying": 0,
+      "totalHours": 0,
+      "averageRating": 0,
+      "reviewsWritten": 0
+    },
+    "preferences": {
+      "emailNotifications": true,
+      "profileVisibility": "public",
+      "showOnlineStatus": true
+    },
+    "createdAt": "2025-06-25T02:14:47.321Z",
+    "updatedAt": "2025-06-25T02:14:47.321Z"
+  }
+]

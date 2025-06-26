@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - GameTracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/profile.css" />
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav-container">
+        <a href="game_tracker.html" class="logo">GameTracker</a>
+        <ul class="nav-links">
+          <li><a href="game_tracker.html">Discover</a></li>
+          <li><a href="my_list.html">My List</a></li>
+          <li><a href="#" onclick="showFeature('Friends')">Friends</a></li>
+          <li><a href="#" onclick="showFeature('Reviews')">Reviews</a></li>
+        </ul>
+        <div class="user-menu">
+          <div class="user-avatar" onclick="showFeature('Settings')">S</div>
+          <button class="settings-btn" onclick="showFeature('Settings')">
+            ⚙️
+          </button>
+          <button
+            class="notifications-btn"
+            onclick="showFeature('Notifications')"
+          >
+            🔔
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Loading state -->
+      <div id="loadingState" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading profile...</p>
+      </div>
+
+      <!-- Error state -->
+      <div id="errorState" class="error-container" style="display: none">
+        <div class="error-message">
+          <h2>Profile Not Found</h2>
+          <p>
+            The user profile you're looking for doesn't exist or has been
+            removed.
+          </p>
+          <button class="btn btn-primary" onclick="window.history.back()">
+            Go Back
+          </button>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div id="mainContent" style="display: none">
+        <section class="profile-header">
+          <div class="profile-info">
+            <div class="profile-avatar">
+              <img
+                id="profileAvatar"
+                src="https://via.placeholder.com/120x120/0088FF/FFFFFF?text=SM"
+                alt="Profile Avatar"
+              />
+            </div>
+            <div class="profile-details">
+              <h1 class="profile-name" id="profileName">Loading...</h1>
+              <p class="profile-bio" id="profileBio">
+                Loading profile information...
+              </p>
+              <div class="profile-meta">
+                <span class="joined-date" id="joinedDate">📅 Joined...</span>
+                <span class="location" id="location" style="display: none"
+                  >📍 Location</span
+                >
+              </div>
+              <div class="profile-stats">
+                <span class="followers" id="followersCount">0 Followers</span>
+                <span class="following" id="followingCount">0 Following</span>
+              </div>
+            </div>
+            <div class="profile-actions">
+              <button
+                class="btn btn-primary"
+                id="editProfileBtn"
+                onclick="openEditModal()"
+                style="display: none"
+              >
+                ✏️ Edit Profile
+              </button>
+              <button
+                class="btn btn-secondary"
+                id="followBtn"
+                onclick="toggleFollow()"
+                style="display: none"
+              >
+                ➕ Follow
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-section">
+          <h2 class="section-title">Gaming Statistics</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number" id="totalGames">0</div>
+              <div class="stat-label">Games in Library</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="averageRating">0</div>
+              <div class="stat-label">Average Rating</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="totalHours">0h</div>
+              <div class="stat-label">Total Hours</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="reviewsCount">0</div>
+              <div class="stat-label">Reviews Written</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="games-section">
+          <div class="section-header">
+            <h2 class="section-title">Games Library</h2>
+            <div class="game-filters">
+              <button class="filter-btn active" onclick="filterGames('all')">
+                All
+              </button>
+              <button class="filter-btn" onclick="filterGames('playing')">
+                Playing
+              </button>
+              <button class="filter-btn" onclick="filterGames('completed')">
+                Completed
+              </button>
+              <button class="filter-btn" onclick="filterGames('planned')">
+                Planned
+              </button>
+            </div>
+          </div>
+
+          <div class="games-list" id="gamesList">
+            <!-- Games will be loaded dynamically -->
+          </div>
+
+          <div id="gamesLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading games...</p>
+          </div>
+
+          <div id="noGames" class="empty-state" style="display: none">
+            <h3>No games found</h3>
+            <p>This user hasn't added any games to their library yet.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editProfileModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Account Preferences</h2>
+          <button class="close-modal" onclick="closeEditModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-section">
+            <h3 class="form-section-title">👤 Profile Information</h3>
+
+            <div class="form-group">
+              <label for="displayName">Display Name</label>
+              <input type="text" id="displayName" />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" />
+            </div>
+
+            <div class="form-group">
+              <label for="bio">Bio</label>
+              <textarea
+                id="bio"
+                rows="4"
+                placeholder="Tell us about yourself..."
+              ></textarea>
+            </div>
+
+            <button class="btn btn-primary save-btn" onclick="saveProfile()">
+              Save Changes
+            </button>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">🔒 Password & Security</h3>
+
+            <div class="security-item" onclick="showFeature('Change Password')">
+              <div class="security-info">
+                <h4>Change Password</h4>
+                <p>Update your account password</p>
+              </div>
+              <span class="arrow">❯</span>
+            </div>
+
+            <div
+              class="security-item"
+              onclick="showFeature('Two-Factor Authentication')"
+            >
+              <div class="security-info">
+                <h4>Two-Factor Authentication</h4>
+                <p>Add an extra layer of security</p>
+              </div>
+              <div class="security-status">
+                <span class="status-badge disabled">Disabled</span>
+                <span class="arrow">❯</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="danger-zone">
+            <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        text-align: center;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #0088ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+      }
+
+      .error-message {
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .error-message h2 {
+        color: #ff4757;
+        margin-bottom: 1rem;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+      }
+
+      .empty-state h3 {
+        margin-bottom: 0.5rem;
+        color: #333;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .notification.success {
+        background-color: #2ecc71;
+      }
+
+      .notification.error {
+        background-color: #e74c3c;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .game-item {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+      }
+
+      .game-item.hidden {
+        display: none !important;
+      }
+    </style>
+
+    <script>
+      const API_BASE_URL = "http://localhost:5000/api";
+      let currentUser = null;
+      let profileUser = null;
+      let userGames = [];
+      let isOwnProfile = false;
+      let isFollowing = false;
+      let currentFilter = "all";
+
+      // Initialize the page
+      document.addEventListener("DOMContentLoaded", function () {
+        initializePage();
+        setupEventListeners();
+      });
+
+      async function initializePage() {
+        try {
+          // Check if user is authenticated
+          const token = localStorage.getItem("token");
+          if (!token) {
+            window.location.href = "sign_in.html";
+            return;
+          }
+
+          // Get current user info
+          currentUser = await getCurrentUser();
+          if (!currentUser) {
+            window.location.href = "sign_in.html";
+            return;
+          }
+
+          // Determine which profile to load
+          const urlParams = new URLSearchParams(window.location.search);
+          const userId = urlParams.get("user");
+
+          if (!userId || userId === currentUser.id) {
+            isOwnProfile = true;
+            profileUser = currentUser;
+          } else {
+            isOwnProfile = false;
+            profileUser = await getUserById(userId);
+          }
+
+          if (!profileUser) {
+            showError();
+            return;
+          }
+
+          // Load profile data
+          await loadProfile();
+          await loadUserGames();
+          await loadUserStats();
+
+          // Show main content
+          document.getElementById("loadingState").style.display = "none";
+          document.getElementById("mainContent").style.display = "block";
+        } catch (error) {
+          console.error("Error initializing page:", error);
+          showError();
+        }
+      }
+
+      async function getCurrentUser() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/users/me`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.user;
+          }
+          return null;
+        } catch (error) {
+          console.error("Error getting current user:", error);
+          return null;
+        }
+      }
+
+      async function getUserById(userId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.user;
+          }
+          return null;
+        } catch (error) {
+          console.error("Error getting user:", error);
+          return null;
+        }
+      }
+
+      function loadProfile() {
+        // Update profile information
+        document.getElementById("profileName").textContent =
+          profileUser.displayName || profileUser.username;
+
+        document.getElementById("profileBio").textContent =
+          profileUser.bio || "No bio provided.";
+
+        // Update avatar
+        const avatar = document.getElementById("profileAvatar");
+        if (profileUser.avatar) {
+          avatar.src = profileUser.avatar;
+        } else {
+          const initials = (profileUser.displayName || profileUser.username)
+            .split(" ")
+            .map((name) => name[0])
+            .join("")
+            .toUpperCase()
+            .substring(0, 2);
+          avatar.src = `https://via.placeholder.com/120x120/0088FF/FFFFFF?text=${initials}`;
+        }
+
+        // Update join date
+        const joinDate = new Date(profileUser.createdAt).toLocaleDateString(
+          "pt-BR",
+          {
+            year: "numeric",
+            month: "long",
+          }
+        );
+        document.getElementById(
+          "joinedDate"
+        ).textContent = `📅 Joined ${joinDate}`;
+
+        // Update followers/following
+        document.getElementById("followersCount").textContent = `${
+          profileUser.followers?.length || 0
+        } Followers`;
+        document.getElementById("followingCount").textContent = `${
+          profileUser.following?.length || 0
+        } Following`;
+
+        // Show appropriate buttons
+        if (isOwnProfile) {
+          document.getElementById("editProfileBtn").style.display =
+            "inline-flex";
+          document.getElementById("followBtn").style.display = "none";
+
+          // Pre-fill edit form
+          document.getElementById("displayName").value =
+            profileUser.displayName || "";
+          document.getElementById("email").value = profileUser.email || "";
+          document.getElementById("bio").value = profileUser.bio || "";
+        } else {
+          document.getElementById("editProfileBtn").style.display = "none";
+          document.getElementById("followBtn").style.display = "inline-flex";
+
+          // Check if following
+          isFollowing =
+            currentUser.following?.includes(profileUser.id) || false;
+          updateFollowButton();
+        }
+      }
+
+      async function loadUserGames() {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/lists?userId=${profileUser.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            userGames = data.games || [];
+            displayGames();
+          } else {
+            userGames = [];
+            displayGames();
+          }
+        } catch (error) {
+          console.error("Error loading user games:", error);
+          userGames = [];
+          displayGames();
+        }
+      }
+
+      async function loadUserStats() {
+        try {
+          let stats = null;
+
+          if (isOwnProfile) {
+            // Get detailed stats for own profile
+            const response = await fetch(`${API_BASE_URL}/lists/stats`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              stats = data.basicStats;
+            }
+          }
+
+          // If no stats from API, calculate from user games
+          if (!stats) {
+            stats = calculateStatsFromGames();
+          }
+
+          // Update stats display
+          document.getElementById("totalGames").textContent =
+            stats.totalGames || 0;
+          document.getElementById("averageRating").textContent =
+            stats.averageRating ? stats.averageRating.toFixed(1) : "0";
+          document.getElementById("totalHours").textContent = `${
+            stats.totalHours || 0
+          }h`;
+
+          // Get review count
+          const reviewCount = await getUserReviewCount(profileUser.id);
+          document.getElementById("reviewsCount").textContent = reviewCount;
+        } catch (error) {
+          console.error("Error loading user stats:", error);
+          // Show default stats
+          document.getElementById("totalGames").textContent = userGames.length;
+          document.getElementById("averageRating").textContent = "0";
+          document.getElementById("totalHours").textContent = "0h";
+          document.getElementById("reviewsCount").textContent = "0";
+        }
+      }
+
+      function calculateStatsFromGames() {
+        const totalGames = userGames.length;
+        const totalHours = userGames.reduce(
+          (sum, game) => sum + (game.hoursPlayed || 0),
+          0
+        );
+
+        const ratedGames = userGames.filter((game) => game.rating);
+        const averageRating =
+          ratedGames.length > 0
+            ? ratedGames.reduce((sum, game) => sum + game.rating, 0) /
+              ratedGames.length
+            : 0;
+
+        return {
+          totalGames,
+          totalHours,
+          averageRating,
+          completedGames: userGames.filter(
+            (game) => game.status === "completed"
+          ).length,
+        };
+      }
+
+      async function getUserReviewCount(userId) {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/reviews/user/${userId}?limit=1`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            return data.pagination?.count || 0;
+          }
+          return 0;
+        } catch (error) {
+          console.error("Error getting review count:", error);
+          return 0;
+        }
+      }
+
+      function displayGames() {
+        const gamesList = document.getElementById("gamesList");
+        const gamesLoading = document.getElementById("gamesLoading");
+        const noGames = document.getElementById("noGames");
+
+        gamesLoading.style.display = "none";
+
+        if (userGames.length === 0) {
+          gamesList.style.display = "none";
+          noGames.style.display = "block";
+          return;
+        }
+
+        noGames.style.display = "none";
+        gamesList.style.display = "block";
+
+        gamesList.innerHTML = userGames
+          .map((userGame) => {
+            const game = userGame.gameInfo || userGame.game || {};
+            const rating = userGame.rating || 0;
+            const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+
+            return `
+            <div class="game-item" data-status="${userGame.status}">
+              <div class="game-cover">
+                <img
+                  src="${
+                    game.images?.cover ||
+                    "https://via.placeholder.com/200x300/666/FFF?text=No+Image"
+                  }"
+                  alt="${game.title || "Unknown Game"}"
+                  onerror="this.src='https://via.placeholder.com/200x300/666/FFF?text=No+Image'"
+                />
+              </div>
+              <div class="game-info">
+                <h3 class="game-title">${game.title || "Unknown Game"}</h3>
+                <p class="game-meta">${game.genres?.[0] || "Unknown"} • ${
+              game.releaseDate
+                ? new Date(game.releaseDate).getFullYear()
+                : "Unknown"
+            }</p>
+                ${
+                  rating > 0
+                    ? `
+                  <div class="game-rating">
+                    <span class="stars">${stars}</span>
+                    <span class="rating-value">${rating}.0</span>
+                  </div>
+                `
+                    : ""
+                }
+                <span class="game-status ${userGame.status}">${
+              userGame.hoursPlayed || 0
+            }h played</span>
+                <span class="completion-badge ${
+                  userGame.status === "playing" ? "playing" : ""
+                }">${getStatusDisplay(userGame.status)}</span>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+
+        // Apply current filter
+        filterGames(currentFilter);
+      }
+
+      function getStatusDisplay(status) {
+        const statusMap = {
+          playing: "Playing",
+          completed: "Completed",
+          planned: "Planned",
+          paused: "Paused",
+          dropped: "Dropped",
+        };
+        return statusMap[status] || status;
+      }
+
+      function filterGames(filter) {
+        currentFilter = filter;
+
+        // Update active filter button
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event?.target?.classList.add("active") ||
+          document
+            .querySelector(`[onclick="filterGames('${filter}')"]`)
+            .classList.add("active");
+
+        // Filter game items
+        const gameItems = document.querySelectorAll(".game-item");
+        gameItems.forEach((item) => {
+          const status = item.dataset.status;
+          const shouldShow = filter === "all" || status === filter;
+
+          if (shouldShow) {
+            item.classList.remove("hidden");
+          } else {
+            item.classList.add("hidden");
+          }
+        });
+      }
+
+      async function toggleFollow() {
+        if (isOwnProfile) return;
+
+        try {
+          const endpoint = isFollowing ? "unfollow" : "follow";
+          const response = await fetch(
+            `${API_BASE_URL}/users/${profileUser.id}/${endpoint}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            isFollowing = !isFollowing;
+            updateFollowButton();
+
+            // Update follower count
+            const currentCount = parseInt(
+              document.getElementById("followersCount").textContent
+            );
+            const newCount = isFollowing ? currentCount + 1 : currentCount - 1;
+            document.getElementById(
+              "followersCount"
+            ).textContent = `${newCount} Followers`;
+
+            showNotification(
+              isFollowing ? "Now following user!" : "Unfollowed user",
+              "success"
+            );
+          } else {
+            showNotification("Failed to update follow status", "error");
+          }
+        } catch (error) {
+          console.error("Error toggling follow:", error);
+          showNotification("Failed to update follow status", "error");
+        }
+      }
+
+      function updateFollowButton() {
+        const followBtn = document.getElementById("followBtn");
+        if (isFollowing) {
+          followBtn.textContent = "✓ Following";
+          followBtn.classList.add("following");
+        } else {
+          followBtn.textContent = "➕ Follow";
+          followBtn.classList.remove("following");
+        }
+      }
+
+      async function saveProfile() {
+        try {
+          const updatedData = {
+            displayName: document.getElementById("displayName").value,
+            email: document.getElementById("email").value,
+            bio: document.getElementById("bio").value,
+          };
+
+          const response = await fetch(`${API_BASE_URL}/users/me`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(updatedData),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            profileUser = data.user;
+            loadProfile();
+            closeEditModal();
+            showNotification("Profile updated successfully!", "success");
+          } else {
+            const errorData = await response.json();
+            showNotification(
+              errorData.message || "Failed to update profile",
+              "error"
+            );
+          }
+        } catch (error) {
+          console.error("Error saving profile:", error);
+          showNotification("Failed to update profile", "error");
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "sign_in.html";
+      }
+
+      function openEditModal() {
+        document.getElementById("editProfileModal").style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeEditModal() {
+        document.getElementById("editProfileModal").style.display = "none";
+        document.body.style.overflow = "auto";
+      }
+
+      function showError() {
+        document.getElementById("loadingState").style.display = "none";
+        document.getElementById("errorState").style.display = "block";
+      }
+
+      function showNotification(message, type = "success") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.innerHTML =
+          type === "success" ? `✅ ${message}` : `❌ ${message}`;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }
+
+      function showFeature(feature) {
+        showNotification(`${feature} feature coming soon! 🚀`, "success");
+      }
+
+      function setupEventListeners() {
+        // Close modal on Escape key
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            closeEditModal();
+          }
+        });
+
+        // Close modal on backdrop click
+        document
+          .getElementById("editProfileModal")
+          .addEventListener("click", function (e) {
+            if (e.target === this) {
+              closeEditModal();
+            }
+          });
+      }
+    </script>
+  </body>
+</html>
